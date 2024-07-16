@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -42,30 +41,11 @@ class InputOutputTest {
 		String userName = getUserName();
 		String password = getPassword();
 		String phoneNumber = getPhoneNumber();
-		LocalDate dateLastLogin = getDateLastLogin();
-		int numberOfLogins = getNumberOfLogins();
+		LocalDate dateLastLogin = io.readIsoDateRange("Enter last login date in format yyyy-mm-dd", "Wrong date", 
+														LocalDate.MIN, LocalDate.now().plusDays(1));
+		int numberOfLogins = io.readNumberRange("Enter number of logins", "Wrong value", 
+														1, Integer.MAX_VALUE);
 		io.writeLine(new User(userName, password, dateLastLogin, phoneNumber, numberOfLogins));
-	}
-
-	private LocalDate getDateLastLogin() {
-		LocalDate dateLastLogin = io.readIsoDateRange("Enter last login date in format yyyy-mm-dd", "Wrong date", LocalDate.MIN, LocalDate.now().plusDays(1));
-		return dateLastLogin;
-	}
-
-	private int getNumberOfLogins() {
-		Function<String, Integer> mapper = str -> {
-			Integer inputValue = null;
-			try {
-				inputValue = Integer.parseInt(str);
-				if ( inputValue < 1  ) {
-					throw new RuntimeException("Number should be greater then or equal to 1");
-				}
-			} catch (RuntimeException e) {
-				throw new RuntimeException( e );
-			}
-			return inputValue;
-		};
-		return io.readObject("Enter number of logins", "Wrong value", mapper);
 	}
 
 	private String getPhoneNumber() {

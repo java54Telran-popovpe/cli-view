@@ -57,6 +57,22 @@ public interface InputOutput {
 		};
 		return readObject( promt,  errorPromt, mapper );
 	}
+	default Integer readNumberRange(String promt, String errorPromt, int min, int max) {
+		Function<String, Integer> mapper = str -> {
+			Integer inputValue = null;
+			try {
+				inputValue = Integer.parseInt(str);
+				if ( inputValue >= min && inputValue < max ) {
+					throw new RuntimeException("Number should be greater or equal " + min + " and less then " + max);
+				}
+			} catch (RuntimeException e) {
+				throw new RuntimeException();
+			}
+			return inputValue;
+		};
+		return readObject( promt,  errorPromt, mapper );
+	}
+	
 
 				
 	//return string if predicate succeeds
