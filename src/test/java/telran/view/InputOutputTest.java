@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -44,7 +45,7 @@ class InputOutputTest {
 		LocalDate dateLastLogin = io.readIsoDateRange("Enter last login date in format yyyy-mm-dd", "Wrong date", 
 														LocalDate.MIN, LocalDate.now().plusDays(1));
 		int numberOfLogins = io.readNumberRange("Enter number of logins", "Wrong value", 
-														1, Integer.MAX_VALUE);
+														1.0, Integer.MAX_VALUE).intValue();
 		io.writeLine(new User(userName, password, dateLastLogin, phoneNumber, numberOfLogins));
 	}
 
@@ -55,24 +56,46 @@ class InputOutputTest {
 		return io.readStringPredicate("Enter phone number", "Wrong phone number:", isIsraelMobilePhoneNumber);
 	}
 
+
 	private String getPassword() {
-		Predicate<String> atLeastOneCapital = 
-				trueOrThrow(str -> str.codePoints().anyMatch( i -> Character.isUpperCase(i)), 
-						"Should be at least one capital letter");
-		Predicate<String> atLeastOneLowerCase = 
-				trueOrThrow(str -> str.codePoints().anyMatch( i -> Character.isLowerCase(i)), 
-						"Should be at least one capital letter");
-		Predicate<String> atLeastOneDigit = 
-				trueOrThrow(str -> str.codePoints().anyMatch( i -> Character.isDigit(i)), 
-						"Should be at least one digit");
-		Predicate<String> atLeastOneSpecialChar = 
-				trueOrThrow(str -> Arrays.stream(str.split("")).anyMatch(s-> "#$*&%".contains(s)), 
-						"Should be at least one symbol from [#$*&%]");
-		return io.readStringPredicate("Enter password", "Wrong password:", 
-				lengthAtLeast(8).and(atLeastOneCapital).and(atLeastOneLowerCase).and(atLeastOneDigit).and(atLeastOneSpecialChar));
+		Set<Integer> specialChars = new HashSet<>(Arrays.asList("#$*&%".codePoints().boxed().toArray(Integer[]::new)));
+		Predicate<Integer> atLeastOneCapital = i -> Character.isUpperCase(i);
+		Predicate<Integer> atLeastOneLowerCase = i -> Character.isLowerCase(i);
+		Predicate<Integer> atLeastOneDigit = i -> Character.isDigit(i);
+		Predicate<Integer> atLeastOneSpecialChar =  specialChars::contains;
+		return io.readStringPredicate("Enter password", "Password rules: at least 8 symbols, contains one capital letter, one lower case letter, one digit,one symbol from \"#$*&%.\"", 
+				str -> str.length() > 7 && str.codePoints().boxed().anyMatch(	atLeastOneCapital
+																				.and(atLeastOneDigit)
+																				.and(atLeastOneLowerCase)
+																				.and(atLeastOneDigit)
+																				.and(atLeastOneSpecialChar)
+																			));
+	}
+	
+	private String getPassword1() {
+		Predicate<String> predicate = str -> {
+			boolean capital = false;
+			boolean lowerCase = false;
+			boolean digit = false;
+			boolean specialChar = false;
+			Set<Character> specialChars = new HashSet<>(Arrays.asList( new Character[]{'#', '$', '*',  '&',  '%' }));
+			if ( str.length() < 8) {
+				throw new RuntimeException("Password length should be equal to or greater then 8") ;			
+			}
+			for(Character chr: str.toCharArray()) {
+				capital = !capital && Character.isUpperCase(chr);
+				lowerCase = !lowerCase && Character.isLowerCase(chr);
+				digit = !digit && Character.isDigit(chr);
+				specialChar = !specialChar && specialChars.contains(chr);
+			}
+			return capital && lowerCase && specialChar && digit;
+		};
+		
+		return io.readStringPredicate("Enter password", "Wrong password:", predicate);
 	}
 
 	private String getUserName() {
+		
 		Predicate<String> allASCIILetters = 
 				trueOrThrow(str -> str.codePoints().allMatch(i -> i < 127 && Character.isLetter(i)),
 								"only ASCII letters allowed");
@@ -81,6 +104,28 @@ class InputOutputTest {
 						"first letter should be capital, others - in lower case");
 		return io.readStringPredicate("Enter userName", "Wrong username:", 
 				lengthAtLeast(6).and(allASCIILetters).and(firstCapitalOtherLowerCase));
+	}
+	
+	private String getUserName1() {
+		Predicate<String> predicate = str -> {
+			if ( str.length() < 6 ) {
+				throw new RuntimeException("Username length should be equal to or greater then 6");
+			}
+			char[] chrs = str.toCharArray();
+			if ( chrs[0] > 127 && !Character.isUpperCase(chrs[0]) ) {
+				throw new RuntimeException("First letter should be ASCII uppercase letter");
+			}
+			int i = 1;
+			int len = str.length();
+			while( i < len && chrs[i] < 127 && Character.isLowerCase(chrs[i])) {
+				i++;
+			}
+			if ( i < len ) {
+				throw new RuntimeException("All letters, beside the first, should be in lowercase");
+			}
+			return true;
+		};
+		return io.readStringPredicate("Enter userName", "Wrong username:", predicate);
 	}
 	
 	private Predicate<String> trueOrThrow( Predicate<String> predicate, String message) {

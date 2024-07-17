@@ -45,37 +45,30 @@ public interface InputOutput {
 	default Double readNumberRange(String promt, String errorPromt, double min, double max) {
 		Function<String, Double> mapper = str -> {
 			Double inputValue = null;
-			try {
 				inputValue = Double.parseDouble(str);
-				if ( inputValue >= min && inputValue < max ) {
+				if ( inputValue < min && inputValue >= max ) {
 					throw new RuntimeException("Number should be greater or equal " + min + " and less then " + max);
 				}
-			} catch (RuntimeException e) {
-				throw new RuntimeException();
-			}
-			return inputValue;
-		};
-		return readObject( promt,  errorPromt, mapper );
-	}
-	default Integer readNumberRange(String promt, String errorPromt, int min, int max) {
-		Function<String, Integer> mapper = str -> {
-			Integer inputValue = null;
-			try {
-				inputValue = Integer.parseInt(str);
-				if ( inputValue >= min && inputValue < max ) {
-					throw new RuntimeException("Number should be greater or equal " + min + " and less then " + max);
-				}
-			} catch (RuntimeException e) {
-				throw new RuntimeException();
-			}
 			return inputValue;
 		};
 		return readObject( promt,  errorPromt, mapper );
 	}
 	
+	
 
 				
 	//return string if predicate succeeds
+	default <T> T readObjectPredicate(String promt, String errorPromt, Function<String, T> func, Predicate<T> predicate) {
+		Function<String, T> mapper = str -> {
+				T res = func.apply(str);
+				if ( predicate.negate().test(res) ) {
+					throw new RuntimeException("Input value failed to pass conditions check.");
+				}
+				return res;
+		};
+		return readObject( promt,  errorPromt, mapper );
+	}
+	
 	default String readStringPredicate(String promt, String errorPromt, Predicate<String> predicate) {
 		Function<String, String> mapper = str -> {
 				if ( predicate.negate().test(str) ) {
@@ -85,6 +78,7 @@ public interface InputOutput {
 		};
 		return readObject( promt,  errorPromt, mapper );
 	}
+	
 	default String readStringOptions(String promt, String errorPromt, HashSet<String> options) {
 		//string one of options
 		return readStringPredicate(promt,errorPromt, str -> options.contains(str));
@@ -97,16 +91,12 @@ public interface InputOutput {
 		//Entered string must be a local date in ISO format: yyy-mm-dd in range (from,to)
 		Function<String, LocalDate> mapper = str -> {
 			LocalDate inputValue = null;
-			try {
 				inputValue = LocalDate.parse(str);
 				if ( !inputValue.isAfter(from) || !inputValue.isBefore(to)) {
 					throw new RuntimeException((!from.equals(LocalDate.MIN) ? "Date should be after " + from : "" ) + 
 												(!to.equals(LocalDate.MAX) ? " Date should be before " + to : "" ));
 				}
-			} catch (RuntimeException e) {
-				throw new RuntimeException(e);
-			}
-			return inputValue;
+				return inputValue;
 		};
 		return readObject(promt,errorPromt, mapper);
 	}
