@@ -71,28 +71,6 @@ class InputOutputTest {
 																				.and(atLeastOneSpecialChar)
 																			));
 	}
-	
-	private String getPassword1() {
-		Predicate<String> predicate = str -> {
-			boolean capital = false;
-			boolean lowerCase = false;
-			boolean digit = false;
-			boolean specialChar = false;
-			Set<Character> specialChars = new HashSet<>(Arrays.asList( new Character[]{'#', '$', '*',  '&',  '%' }));
-			if ( str.length() < 8) {
-				throw new RuntimeException("Password length should be equal to or greater then 8") ;			
-			}
-			for(Character chr: str.toCharArray()) {
-				capital = !capital && Character.isUpperCase(chr);
-				lowerCase = !lowerCase && Character.isLowerCase(chr);
-				digit = !digit && Character.isDigit(chr);
-				specialChar = !specialChar && specialChars.contains(chr);
-			}
-			return capital && lowerCase && specialChar && digit;
-		};
-		
-		return io.readStringPredicate("Enter password", "Wrong password:", predicate);
-	}
 
 	private String getUserName() {
 		
