@@ -56,20 +56,44 @@ class InputOutputTest {
 		return io.readStringPredicate("Enter phone number", "Wrong phone number:", isIsraelMobilePhoneNumber);
 	}
 
-
 	private String getPassword() {
-		Set<Integer> specialChars = new HashSet<>(Arrays.asList("#$*&%".codePoints().boxed().toArray(Integer[]::new)));
-		Predicate<Integer> atLeastOneCapital = i -> Character.isUpperCase(i);
-		Predicate<Integer> atLeastOneLowerCase = i -> Character.isLowerCase(i);
-		Predicate<Integer> atLeastOneDigit = i -> Character.isDigit(i);
-		Predicate<Integer> atLeastOneSpecialChar =  specialChars::contains;
-		return io.readStringPredicate("Enter password", "Password rules: at least 8 symbols, contains one capital letter, one lower case letter, one digit,one symbol from \"#$*&%.\"", 
-				str -> str.length() > 7 && str.codePoints().boxed().anyMatch(	atLeastOneCapital
-																				.and(atLeastOneDigit)
-																				.and(atLeastOneLowerCase)
-																				.and(atLeastOneDigit)
-																				.and(atLeastOneSpecialChar)
-																			));
+		Predicate<String> atLeastOneCapital = 
+				trueOrThrow(str -> str.codePoints().anyMatch( i -> Character.isUpperCase(i)), 
+						"Should be at least one capital letter");
+		Predicate<String> atLeastOneLowerCase = 
+				trueOrThrow(str -> str.codePoints().anyMatch( i -> Character.isLowerCase(i)), 
+						"Should be at least one capital letter");
+		Predicate<String> atLeastOneDigit = 
+				trueOrThrow(str -> str.codePoints().anyMatch( i -> Character.isDigit(i)), 
+						"Should be at least one digit");
+		Predicate<String> atLeastOneSpecialChar = 
+				trueOrThrow(str -> Arrays.stream(str.split("")).anyMatch(s-> "#$*&%".contains(s)), 
+						"Should be at least one symbol from [#$*&%]");
+		return io.readStringPredicate("Enter password", "Wrong password:", 
+				lengthAtLeast(8).and(atLeastOneCapital).and(atLeastOneLowerCase).and(atLeastOneDigit).and(atLeastOneSpecialChar));
+	}
+	
+	
+	private String getPassword1() {
+		Predicate<String> predicate = str -> {
+			boolean capital = false;
+			boolean lowerCase = false;
+			boolean digit = false;
+			boolean specialChar = false;
+			Set<Character> specialChars = new HashSet<>(Arrays.asList( new Character[]{'#', '$', '*',  '&',  '%' }));
+			if ( str.length() < 8) {
+				throw new RuntimeException("Password length should be equal to or greater then 8") ;			
+			}
+			for(Character chr: str.toCharArray()) {
+				capital = !capital && Character.isUpperCase(chr);
+				lowerCase = !lowerCase && Character.isLowerCase(chr);
+				digit = !digit && Character.isDigit(chr);
+				specialChar = !specialChar && specialChars.contains(chr);
+			}
+			return capital && lowerCase && specialChar && digit;
+		};
+		
+		return io.readStringPredicate("Enter password", "Wrong password:", predicate);
 	}
 
 	private String getUserName() {
