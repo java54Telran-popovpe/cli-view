@@ -46,7 +46,7 @@ public interface InputOutput {
 		Function<String, Double> mapper = str -> {
 			Double inputValue = null;
 				inputValue = Double.parseDouble(str);
-				if ( inputValue < min && inputValue >= max ) {
+				if ( inputValue < min || inputValue >= max ) {
 					throw new RuntimeException("Number should be greater or equal " + min + " and less then " + max);
 				}
 			return inputValue;
